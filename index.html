@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Conway's Game of Life</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>康威生命游戏</h1>
+    <p class="sub">点击格子创造生命 · 按空格启动/暂停</p>
+  </header>
+
+  <div class="controls">
+    <button id="toggle">▶ 开始</button>
+    <button id="step">⏭ 单步</button>
+    <button id="clear">🗑 清空</button>
+    <button id="random">🎲 随机</button>
+    <label>速度
+      <input type="range" id="speed" min="1" max="60" value="10">
+      <span id="speedVal">10</span> fps
+    </label>
+    <label>格子
+      <input type="range" id="cellSize" min="4" max="30" value="12">
+      <span id="cellVal">12</span>px
+    </label>
+    <label>预设
+      <select id="preset">
+        <option value="">—</option>
+        <option value="glider">滑翔机 Glider</option>
+        <option value="gliderGun">高斯帕滑翔机枪</option>
+        <option value="pulsar">脉冲星 Pulsar</option>
+        <option value="lwss">轻型飞船 LWSS</option>
+        <option value="rpentomino">R-pentomino</option>
+      </select>
+    </label>
+    <span class="stat">代数 <b id="gen">0</b> · 存活 <b id="alive">0</b></span>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <footer>
+    <p>规则：B3/S23 — 活细胞有 2~3 个邻居存活，死细胞有 3 个邻居出生</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
