@@ -3,48 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Mini Arcade Lab</title>
-<meta name="description" content="一个带导览页的浏览器小游戏合集，包含生命游戏、贪吃蛇和记忆翻牌，支持手机端。">
+<title>Pocket Arcade</title>
+<meta name="description" content="Pocket Arcade 是一个即开即玩的浏览器小游戏站，包含生命游戏、贪吃蛇和记忆翻牌，支持手机与桌面端。">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="page-shell">
     <header class="hero" id="top">
       <nav class="topbar">
-        <a class="brand" href="#top">Mini Arcade Lab</a>
+        <a class="brand" href="#top">Pocket Arcade</a>
         <div class="topbar__links">
-          <a href="#guide">导览</a>
+          <a href="#guide">推荐</a>
           <a href="#games">游戏</a>
-          <a href="#about">玩法</a>
+          <a href="#about">帮助</a>
         </div>
       </nav>
 
       <div class="hero__content">
         <div class="hero__copy">
-          <p class="eyebrow">Browser Games Collection</p>
-          <h1>一个更完整的小游戏展示页</h1>
+          <p class="eyebrow">Instant Browser Fun</p>
+          <h1>打开就能玩的轻量小游戏站</h1>
           <p class="hero__text">
-            现在它不再只是单个页面，而是一个带导览、统一 UI、支持手机端的小游戏合集。
-            你可以在这里进入生命游戏、贪吃蛇和记忆翻牌。
+            不用下载，不用登录，直接开始。这里收纳了 3 个节奏不同的小游戏：
+            想放松时玩记忆翻牌，想快速上手玩贪吃蛇，想安静观察就打开生命游戏。
           </p>
           <div class="hero__actions">
-            <a class="btn btn--primary" href="#games">开始游玩</a>
-            <a class="btn btn--ghost" href="#about">查看说明</a>
+            <a class="btn btn--primary" href="#games">立即开始</a>
+            <a class="btn btn--ghost" href="#guide">看推荐玩法</a>
           </div>
         </div>
 
         <div class="hero__panel">
           <div class="hero__stat">
-            <span class="hero__stat-label">Included</span>
-            <strong>3 Games</strong>
+            <span class="hero__stat-label">玩法</span>
+            <strong>3 种小游戏</strong>
           </div>
           <div class="hero__stat">
-            <span class="hero__stat-label">Layout</span>
-            <strong>Desktop + Mobile</strong>
+            <span class="hero__stat-label">设备</span>
+            <strong>手机和电脑都能玩</strong>
           </div>
           <div class="hero__stat">
-            <span class="hero__stat-label">Tech</span>
-            <strong>Vanilla HTML / CSS / JS</strong>
+            <span class="hero__stat-label">体验</span>
+            <strong>即开即玩，无需下载</strong>
           </div>
         </div>
       </div>
@@ -53,40 +53,40 @@
     <main>
       <section class="guide" id="guide">
         <div class="section-head">
-          <p class="section-kicker">Guide</p>
-          <h2>先挑一个游戏开始</h2>
-          <p>导览页会先告诉你每个游戏的风格和操作方式，移动端也能直接玩。</p>
+          <p class="section-kicker">Pick Your Mode</p>
+          <h2>先选一个适合你现在状态的游戏</h2>
+          <p>不确定先玩哪个也没关系，下面按节奏和操作门槛帮你快速挑选。</p>
         </div>
 
         <div class="guide-grid">
           <article class="guide-card">
-            <p class="guide-card__tag">Strategy</p>
+            <p class="guide-card__tag">慢节奏</p>
             <h3>生命游戏</h3>
-            <p>经典 Conway 自动机。支持预设图案、随机填充、速度和网格大小调节。</p>
-            <a class="guide-card__link" href="#game-life" data-jump="life">进入这个游戏</a>
+            <p>适合喜欢观察变化的人。你可以自己绘制细胞，也可以直接放入经典图案开始演化。</p>
+            <a class="guide-card__link" href="#game-life" data-jump="life">去玩生命游戏</a>
           </article>
 
           <article class="guide-card">
-            <p class="guide-card__tag">Arcade</p>
+            <p class="guide-card__tag">快节奏</p>
             <h3>霓虹贪吃蛇</h3>
-            <p>更适合碎片化游玩。支持键盘方向键和手机端虚拟方向键。</p>
-            <a class="guide-card__link" href="#game-snake" data-jump="snake">进入这个游戏</a>
+            <p>适合想立刻开始的玩家。规则简单，节奏直接，手机和电脑都能顺手操作。</p>
+            <a class="guide-card__link" href="#game-snake" data-jump="snake">去玩贪吃蛇</a>
           </article>
 
           <article class="guide-card">
-            <p class="guide-card__tag">Puzzle</p>
+            <p class="guide-card__tag">轻解谜</p>
             <h3>记忆翻牌</h3>
-            <p>轻量休闲小游戏，点两张牌寻找相同图案，适合手机点击操作。</p>
-            <a class="guide-card__link" href="#game-memory" data-jump="memory">进入这个游戏</a>
+            <p>适合碎片时间放松。连续翻牌配对，越少步数完成越漂亮，触屏体验也很自然。</p>
+            <a class="guide-card__link" href="#game-memory" data-jump="memory">去玩翻牌</a>
           </article>
         </div>
       </section>
 
       <section class="games" id="games">
         <div class="section-head">
-          <p class="section-kicker">Games</p>
-          <h2>小游戏合集</h2>
-          <p>顶部标签可以快速切换，下面每个模块也都可以独立游玩。</p>
+          <p class="section-kicker">Play</p>
+          <h2>选择一个游戏开始</h2>
+          <p>顶部标签可以快速切换。每个游戏都把控制区和画面放在一起，方便边看边操作。</p>
         </div>
 
         <div class="game-tabs" aria-label="小游戏切换">
@@ -149,7 +149,7 @@
                   <strong id="lifeAlive">0</strong>
                 </div>
                 <div class="stat-card">
-                  <span>操作</span>
+                  <span>快捷键</span>
                   <strong>空格 / S / C / R</strong>
                 </div>
               </div>
@@ -196,7 +196,7 @@
                   <strong id="snakeBest">0</strong>
                 </div>
                 <div class="stat-card">
-                  <span>状态</span>
+                  <span>当前状态</span>
                   <strong id="snakeStatus">等待开始</strong>
                 </div>
               </div>
@@ -240,7 +240,7 @@
                   <strong id="memoryPairs">0 / 8</strong>
                 </div>
                 <div class="stat-card">
-                  <span>状态</span>
+                  <span>当前状态</span>
                   <strong id="memoryStatus">准备开始</strong>
                 </div>
               </div>
@@ -255,22 +255,22 @@
 
       <section class="about" id="about">
         <div class="section-head">
-          <p class="section-kicker">About</p>
-          <h2>这次优化做了什么</h2>
+          <p class="section-kicker">Help</p>
+          <h2>开始前先看一眼</h2>
         </div>
 
         <div class="about-grid">
           <article class="about-card">
-            <h3>导览页</h3>
-            <p>先介绍每个小游戏，再引导用户进入，整体更像完整作品而不是单个 demo。</p>
+            <h3>怎么开始</h3>
+            <p>直接点对应游戏的开始按钮即可，没有加载等待，也不需要切换到新页面。</p>
           </article>
           <article class="about-card">
-            <h3>统一 UI</h3>
-            <p>重做了卡片、按钮、统计区、标签页和背景层次，让视觉更成体系。</p>
+            <h3>电脑端操作</h3>
+            <p>生命游戏支持空格和快捷键，贪吃蛇支持方向键，适合键盘快速上手。</p>
           </article>
           <article class="about-card">
-            <h3>手机适配</h3>
-            <p>布局在窄屏下会自动堆叠，贪吃蛇还加入了触屏方向键。</p>
+            <h3>手机端操作</h3>
+            <p>页面会自动切成单列布局，贪吃蛇带虚拟方向键，翻牌可以直接点按游玩。</p>
           </article>
         </div>
       </section>
