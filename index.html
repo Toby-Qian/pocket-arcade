@@ -2,46 +2,280 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>Conway's Game of Life</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mini Arcade Lab</title>
+<meta name="description" content="一个带导览页的浏览器小游戏合集，包含生命游戏、贪吃蛇和记忆翻牌，支持手机端。">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>康威生命游戏</h1>
-    <p class="sub">点击格子创造生命 · 按空格启动/暂停</p>
-  </header>
+  <div class="page-shell">
+    <header class="hero" id="top">
+      <nav class="topbar">
+        <a class="brand" href="#top">Mini Arcade Lab</a>
+        <div class="topbar__links">
+          <a href="#guide">导览</a>
+          <a href="#games">游戏</a>
+          <a href="#about">玩法</a>
+        </div>
+      </nav>
 
-  <div class="controls">
-    <button id="toggle">▶ 开始</button>
-    <button id="step">⏭ 单步</button>
-    <button id="clear">🗑 清空</button>
-    <button id="random">🎲 随机</button>
-    <label>速度
-      <input type="range" id="speed" min="1" max="60" value="10">
-      <span id="speedVal">10</span> fps
-    </label>
-    <label>格子
-      <input type="range" id="cellSize" min="4" max="30" value="12">
-      <span id="cellVal">12</span>px
-    </label>
-    <label>预设
-      <select id="preset">
-        <option value="">—</option>
-        <option value="glider">滑翔机 Glider</option>
-        <option value="gliderGun">高斯帕滑翔机枪</option>
-        <option value="pulsar">脉冲星 Pulsar</option>
-        <option value="lwss">轻型飞船 LWSS</option>
-        <option value="rpentomino">R-pentomino</option>
-      </select>
-    </label>
-    <span class="stat">代数 <b id="gen">0</b> · 存活 <b id="alive">0</b></span>
+      <div class="hero__content">
+        <div class="hero__copy">
+          <p class="eyebrow">Browser Games Collection</p>
+          <h1>一个更完整的小游戏展示页</h1>
+          <p class="hero__text">
+            现在它不再只是单个页面，而是一个带导览、统一 UI、支持手机端的小游戏合集。
+            你可以在这里进入生命游戏、贪吃蛇和记忆翻牌。
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--primary" href="#games">开始游玩</a>
+            <a class="btn btn--ghost" href="#about">查看说明</a>
+          </div>
+        </div>
+
+        <div class="hero__panel">
+          <div class="hero__stat">
+            <span class="hero__stat-label">Included</span>
+            <strong>3 Games</strong>
+          </div>
+          <div class="hero__stat">
+            <span class="hero__stat-label">Layout</span>
+            <strong>Desktop + Mobile</strong>
+          </div>
+          <div class="hero__stat">
+            <span class="hero__stat-label">Tech</span>
+            <strong>Vanilla HTML / CSS / JS</strong>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="guide" id="guide">
+        <div class="section-head">
+          <p class="section-kicker">Guide</p>
+          <h2>先挑一个游戏开始</h2>
+          <p>导览页会先告诉你每个游戏的风格和操作方式，移动端也能直接玩。</p>
+        </div>
+
+        <div class="guide-grid">
+          <article class="guide-card">
+            <p class="guide-card__tag">Strategy</p>
+            <h3>生命游戏</h3>
+            <p>经典 Conway 自动机。支持预设图案、随机填充、速度和网格大小调节。</p>
+            <a class="guide-card__link" href="#game-life" data-jump="life">进入这个游戏</a>
+          </article>
+
+          <article class="guide-card">
+            <p class="guide-card__tag">Arcade</p>
+            <h3>霓虹贪吃蛇</h3>
+            <p>更适合碎片化游玩。支持键盘方向键和手机端虚拟方向键。</p>
+            <a class="guide-card__link" href="#game-snake" data-jump="snake">进入这个游戏</a>
+          </article>
+
+          <article class="guide-card">
+            <p class="guide-card__tag">Puzzle</p>
+            <h3>记忆翻牌</h3>
+            <p>轻量休闲小游戏，点两张牌寻找相同图案，适合手机点击操作。</p>
+            <a class="guide-card__link" href="#game-memory" data-jump="memory">进入这个游戏</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="games" id="games">
+        <div class="section-head">
+          <p class="section-kicker">Games</p>
+          <h2>小游戏合集</h2>
+          <p>顶部标签可以快速切换，下面每个模块也都可以独立游玩。</p>
+        </div>
+
+        <div class="game-tabs" aria-label="小游戏切换">
+          <button class="tab is-active" type="button" data-target="life">生命游戏</button>
+          <button class="tab" type="button" data-target="snake">贪吃蛇</button>
+          <button class="tab" type="button" data-target="memory">记忆翻牌</button>
+        </div>
+
+        <section class="game-panel is-active" id="game-life" data-panel="life">
+          <div class="game-panel__intro">
+            <div>
+              <p class="game-panel__eyebrow">Conway's Game of Life</p>
+              <h3>生命游戏</h3>
+            </div>
+            <p>绘制细胞、放入经典图案，观察它们在环形世界中繁殖与消亡。</p>
+          </div>
+
+          <div class="game-layout">
+            <div class="control-card">
+              <div class="control-row control-row--wrap">
+                <button id="lifeToggle" class="btn btn--primary" type="button">开始</button>
+                <button id="lifeStep" class="btn btn--secondary" type="button">单步</button>
+                <button id="lifeClear" class="btn btn--secondary" type="button">清空</button>
+                <button id="lifeRandom" class="btn btn--secondary" type="button">随机</button>
+              </div>
+
+              <div class="control-grid">
+                <label class="field">
+                  <span>速度</span>
+                  <input type="range" id="lifeSpeed" min="1" max="60" value="10">
+                  <strong id="lifeSpeedVal">10 fps</strong>
+                </label>
+
+                <label class="field">
+                  <span>格子大小</span>
+                  <input type="range" id="lifeCellSize" min="4" max="30" value="12">
+                  <strong id="lifeCellVal">12 px</strong>
+                </label>
+
+                <label class="field">
+                  <span>预设图案</span>
+                  <select id="lifePreset">
+                    <option value="">选择图案</option>
+                    <option value="glider">Glider</option>
+                    <option value="gliderGun">Gosper Glider Gun</option>
+                    <option value="pulsar">Pulsar</option>
+                    <option value="lwss">LWSS</option>
+                    <option value="rpentomino">R-pentomino</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <span>代数</span>
+                  <strong id="lifeGen">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span>存活</span>
+                  <strong id="lifeAlive">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span>操作</span>
+                  <strong>空格 / S / C / R</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="play-card">
+              <canvas id="lifeCanvas" aria-label="生命游戏画布"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="game-panel" id="game-snake" data-panel="snake">
+          <div class="game-panel__intro">
+            <div>
+              <p class="game-panel__eyebrow">Neon Snake</p>
+              <h3>霓虹贪吃蛇</h3>
+            </div>
+            <p>更快节奏的街机玩法，桌面端用方向键，手机端直接点方向按钮。</p>
+          </div>
+
+          <div class="game-layout">
+            <div class="control-card">
+              <div class="control-row control-row--wrap">
+                <button id="snakeStart" class="btn btn--primary" type="button">开始游戏</button>
+                <button id="snakePause" class="btn btn--secondary" type="button">暂停</button>
+                <button id="snakeReset" class="btn btn--secondary" type="button">重新开始</button>
+              </div>
+
+              <div class="control-grid">
+                <label class="field">
+                  <span>速度</span>
+                  <input type="range" id="snakeSpeed" min="4" max="18" value="9">
+                  <strong id="snakeSpeedVal">9 tick/s</strong>
+                </label>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <span>得分</span>
+                  <strong id="snakeScore">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span>最高分</span>
+                  <strong id="snakeBest">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span>状态</span>
+                  <strong id="snakeStatus">等待开始</strong>
+                </div>
+              </div>
+
+              <div class="touchpad" aria-label="Snake touch controls">
+                <button class="touchpad__btn touchpad__btn--up" type="button" data-dir="up">上</button>
+                <button class="touchpad__btn touchpad__btn--left" type="button" data-dir="left">左</button>
+                <button class="touchpad__btn touchpad__btn--right" type="button" data-dir="right">右</button>
+                <button class="touchpad__btn touchpad__btn--down" type="button" data-dir="down">下</button>
+              </div>
+            </div>
+
+            <div class="play-card">
+              <canvas id="snakeCanvas" width="480" height="480" aria-label="贪吃蛇画布"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="game-panel" id="game-memory" data-panel="memory">
+          <div class="game-panel__intro">
+            <div>
+              <p class="game-panel__eyebrow">Memory Match</p>
+              <h3>记忆翻牌</h3>
+            </div>
+            <p>每次翻开两张牌，找到所有配对。它很适合在手机上轻触游玩。</p>
+          </div>
+
+          <div class="game-layout memory-layout">
+            <div class="control-card">
+              <div class="control-row control-row--wrap">
+                <button id="memoryRestart" class="btn btn--primary" type="button">重新洗牌</button>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <span>步数</span>
+                  <strong id="memoryMoves">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span>配对</span>
+                  <strong id="memoryPairs">0 / 8</strong>
+                </div>
+                <div class="stat-card">
+                  <span>状态</span>
+                  <strong id="memoryStatus">准备开始</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="play-card">
+              <div class="memory-board" id="memoryBoard" aria-label="记忆翻牌"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="about" id="about">
+        <div class="section-head">
+          <p class="section-kicker">About</p>
+          <h2>这次优化做了什么</h2>
+        </div>
+
+        <div class="about-grid">
+          <article class="about-card">
+            <h3>导览页</h3>
+            <p>先介绍每个小游戏，再引导用户进入，整体更像完整作品而不是单个 demo。</p>
+          </article>
+          <article class="about-card">
+            <h3>统一 UI</h3>
+            <p>重做了卡片、按钮、统计区、标签页和背景层次，让视觉更成体系。</p>
+          </article>
+          <article class="about-card">
+            <h3>手机适配</h3>
+            <p>布局在窄屏下会自动堆叠，贪吃蛇还加入了触屏方向键。</p>
+          </article>
+        </div>
+      </section>
+    </main>
   </div>
-
-  <canvas id="canvas"></canvas>
-
-  <footer>
-    <p>规则：B3/S23 — 活细胞有 2~3 个邻居存活，死细胞有 3 个邻居出生</p>
-  </footer>
 
   <script src="script.js"></script>
 </body>
