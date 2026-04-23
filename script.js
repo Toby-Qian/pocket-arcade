@@ -720,6 +720,8 @@
   // ---------- 2048 ----------
   function init2048Game() {
     const board = $("#g2048Board");
+    const bgLayer = board.querySelector(".t2048-bg");
+    const tileLayer = board.querySelector(".t2048-tiles");
     const scoreEl = $("#g2048Score");
     const bestEl = $("#g2048Best");
     const statusEl = $("#g2048Status");
@@ -728,156 +730,231 @@
     const storageKey = "mini-arcade-2048-best";
 
     const N = 4;
-    let grid, score, prev, best, finished;
+    const SLIDE_MS = 130;
 
-    best = Number(localStorage.getItem(storageKey) || 0);
-
-    // Build 16 cells once; we only mutate their text/color.
-    const tiles = [];
-    board.innerHTML = "";
+    // Build the static background once.
+    bgLayer.innerHTML = "";
     for (let i = 0; i < N * N; i++) {
-      const cell = document.createElement("div");
-      cell.className = "t2048-cell";
-      const tile = document.createElement("div");
-      tile.className = "t2048-tile";
-      cell.appendChild(tile);
-      board.appendChild(cell);
-      tiles.push(tile);
+      const c = document.createElement("div");
+      c.className = "t2048-cell";
+      bgLayer.appendChild(c);
     }
 
-    function emptyGrid() { return Array.from({ length: N }, () => new Array(N).fill(0)); }
+    /** @typedef {{ id:number, value:number, x:number, y:number, el:HTMLElement, merged:boolean }} Tile */
 
-    function addRandomTile() {
+    let grid = [];            // N×N of Tile | null
+    let tilesById = new Map(); // id -> Tile
+    let score = 0;
+    let best = Number(localStorage.getItem(storageKey) || 0);
+    let prev = null;          // snapshot for undo
+    let won = false;
+    let dead = false;
+    let busy = false;         // block input mid-animation
+    let nextId = 1;
+    let pendingSpawn = null;
+
+    function createTile(value, x, y, isNew) {
+      const el = document.createElement("div");
+      el.className = "t2048-tile" + (isNew ? " is-new" : "");
+      el.dataset.v = String(value);
+      el.textContent = String(value);
+      el.style.setProperty("--x", x);
+      el.style.setProperty("--y", y);
+      tileLayer.appendChild(el);
+      const tile = { id: nextId++, value, x, y, el, merged: false };
+      tilesById.set(tile.id, tile);
+      return tile;
+    }
+
+    function moveTile(tile, x, y) {
+      tile.x = x; tile.y = y;
+      tile.el.style.setProperty("--x", x);
+      tile.el.style.setProperty("--y", y);
+    }
+
+    function setTileValue(tile, value) {
+      tile.value = value;
+      tile.el.dataset.v = String(value);
+      tile.el.textContent = String(value);
+      tile.el.classList.remove("is-merged");
+      // force reflow so the animation replays reliably
+      void tile.el.offsetWidth;
+      tile.el.classList.add("is-merged");
+    }
+
+    function destroyTile(tile) {
+      tilesById.delete(tile.id);
+      tile.el.remove();
+    }
+
+    function clearBoard() {
+      tilesById.forEach((t) => t.el.remove());
+      tilesById.clear();
+      grid = Array.from({ length: N }, () => new Array(N).fill(null));
+    }
+
+    function spawnRandomTile() {
       const empty = [];
       for (let y = 0; y < N; y++)
         for (let x = 0; x < N; x++)
           if (!grid[y][x]) empty.push([y, x]);
-      if (!empty.length) return false;
+      if (!empty.length) return null;
       const [y, x] = empty[Math.floor(Math.random() * empty.length)];
-      grid[y][x] = Math.random() < 0.9 ? 2 : 4;
-      return true;
+      const v = Math.random() < 0.9 ? 2 : 4;
+      const tile = createTile(v, x, y, true);
+      grid[y][x] = tile;
+      return tile;
+    }
+
+    function takeSnapshot() {
+      return {
+        score,
+        tiles: [...tilesById.values()].map((t) => ({ value: t.value, x: t.x, y: t.y }))
+      };
+    }
+
+    function restoreSnapshot(snap) {
+      clearBoard();
+      score = snap.score;
+      snap.tiles.forEach((t) => {
+        const tile = createTile(t.value, t.x, t.y, false);
+        grid[t.y][t.x] = tile;
+      });
     }
 
     function newGame() {
-      grid = emptyGrid();
+      clearBoard();
       score = 0;
       prev = null;
-      finished = false;
-      addRandomTile();
-      addRandomTile();
-      render();
-      updateStatus("进行中");
+      won = false;
+      dead = false;
+      busy = false;
+      spawnRandomTile();
+      spawnRandomTile();
+      updateHud("进行中");
     }
 
-    function updateStatus(s) {
-      scoreEl.textContent = String(score);
-      bestEl.textContent = String(best);
-      statusEl.textContent = s;
-    }
-
-    function render() {
-      for (let y = 0; y < N; y++) {
-        for (let x = 0; x < N; x++) {
-          const v = grid[y][x];
-          const tile = tiles[y * N + x];
-          tile.textContent = v ? String(v) : "";
-          tile.dataset.v = String(v);
-        }
-      }
+    function updateHud(status) {
       if (score > best) {
         best = score;
         localStorage.setItem(storageKey, String(best));
       }
       scoreEl.textContent = String(score);
       bestEl.textContent = String(best);
+      if (status !== undefined) statusEl.textContent = status;
     }
 
-    // Slide a single row left, merging equal neighbours once.
-    function slideRow(row) {
-      const filtered = row.filter((v) => v);
-      let gained = 0;
-      for (let i = 0; i < filtered.length - 1; i++) {
-        if (filtered[i] === filtered[i + 1]) {
-          filtered[i] *= 2;
-          gained += filtered[i];
-          filtered.splice(i + 1, 1);
-        }
-      }
-      while (filtered.length < N) filtered.push(0);
-      return { row: filtered, gained };
-    }
-
-    function gridsEqual(a, b) {
+    function anyMovePossible() {
       for (let y = 0; y < N; y++)
-        for (let x = 0; x < N; x++)
-          if (a[y][x] !== b[y][x]) return false;
-      return true;
+        for (let x = 0; x < N; x++) {
+          const t = grid[y][x];
+          if (!t) return true;
+          if (x + 1 < N) { const r = grid[y][x + 1]; if (!r || r.value === t.value) return true; }
+          if (y + 1 < N) { const d = grid[y + 1][x]; if (!d || d.value === t.value) return true; }
+        }
+      return false;
     }
 
     function move(dir) {
-      if (finished) return;
-      const snapshot = { grid: grid.map((r) => r.slice()), score };
+      if (busy || dead) return;
+
+      const snapshot = takeSnapshot();
+
+      const dx = dir === "right" ? 1 : dir === "left" ? -1 : 0;
+      const dy = dir === "down" ? 1 : dir === "up" ? -1 : 0;
+      const xs = dx > 0 ? [3, 2, 1, 0] : [0, 1, 2, 3];
+      const ys = dy > 0 ? [3, 2, 1, 0] : [0, 1, 2, 3];
+
+      let moved = false;
       let gained = 0;
+      const merges = []; // {winner, loser, newValue}
 
-      const rotate = (g) => { // rotate clockwise
-        const out = emptyGrid();
-        for (let y = 0; y < N; y++)
-          for (let x = 0; x < N; x++)
-            out[x][N - 1 - y] = g[y][x];
-        return out;
-      };
+      // clear last-move merge flags
+      tilesById.forEach((t) => { t.merged = false; });
 
-      // Normalize every direction to "slide left" by rotating.
-      let g = grid.map((r) => r.slice());
-      const rotations = { left: 0, up: 1, right: 2, down: 3 }[dir];
-      for (let i = 0; i < rotations; i++) g = rotate(g);
+      for (const y of ys) {
+        for (const x of xs) {
+          const tile = grid[y][x];
+          if (!tile) continue;
 
-      for (let y = 0; y < N; y++) {
-        const { row, gained: add } = slideRow(g[y]);
-        g[y] = row;
-        gained += add;
+          // slide until we hit an edge or a tile
+          let nx = x, ny = y;
+          while (true) {
+            const px = nx + dx, py = ny + dy;
+            if (px < 0 || px >= N || py < 0 || py >= N) break;
+            if (grid[py][px]) break;
+            nx = px; ny = py;
+          }
+
+          // check merge with the first obstacle beyond
+          const mx = nx + dx, my = ny + dy;
+          let didMerge = false;
+          if (mx >= 0 && mx < N && my >= 0 && my < N) {
+            const target = grid[my][mx];
+            // Standard 2048 rule: a tile can only participate in one merge per move.
+            if (target && target.value === tile.value && !target.merged && !tile.merged) {
+              grid[y][x] = null;
+              // The surviving tile occupies the target cell; the target will be removed.
+              grid[my][mx] = tile;
+              tile.merged = true;
+              moveTile(tile, mx, my);
+              const newValue = tile.value * 2;
+              gained += newValue;
+              merges.push({ winner: tile, loser: target, newValue });
+              didMerge = true;
+              moved = true;
+            }
+          }
+          if (!didMerge && (nx !== x || ny !== y)) {
+            grid[y][x] = null;
+            grid[ny][nx] = tile;
+            moveTile(tile, nx, ny);
+            moved = true;
+          }
+        }
       }
-      // Rotate back
-      for (let i = 0; i < (4 - rotations) % 4; i++) g = rotate(g);
 
-      if (gridsEqual(grid, g)) return; // no-op move
+      if (!moved) return; // nothing happened; don't save snapshot or spawn
 
-      grid = g;
+      busy = true;
       score += gained;
       prev = snapshot;
-      addRandomTile();
-      render();
+      updateHud("进行中");
 
-      if (hasWon()) { updateStatus("🎉 到达 2048"); }
-      else if (!canMove()) { finished = true; updateStatus("没法继续了"); }
-      else { updateStatus("进行中"); }
-    }
+      // Wait for the slide transition to finish, then handle merges + spawn.
+      pendingSpawn = setTimeout(() => {
+        merges.forEach(({ winner, loser, newValue }) => {
+          destroyTile(loser);
+          setTileValue(winner, newValue);
+        });
 
-    function hasWon() {
-      for (let y = 0; y < N; y++)
-        for (let x = 0; x < N; x++)
-          if (grid[y][x] >= 2048) return true;
-      return false;
-    }
+        spawnRandomTile();
+        updateHud();
 
-    function canMove() {
-      for (let y = 0; y < N; y++)
-        for (let x = 0; x < N; x++) {
-          if (!grid[y][x]) return true;
-          if (x + 1 < N && grid[y][x] === grid[y][x + 1]) return true;
-          if (y + 1 < N && grid[y][x] === grid[y + 1][x]) return true;
+        // Check win / dead states
+        if (!won) {
+          for (const t of tilesById.values()) {
+            if (t.value >= 2048) { won = true; updateHud("🎉 到达 2048"); break; }
+          }
         }
-      return false;
+        if (!anyMovePossible()) {
+          dead = true;
+          updateHud("没法继续了");
+        }
+
+        busy = false;
+      }, SLIDE_MS);
     }
 
     function undo() {
       if (!prev) return;
-      grid = prev.grid.map((r) => r.slice());
-      score = prev.score;
+      clearTimeout(pendingSpawn);
+      restoreSnapshot(prev);
       prev = null;
-      finished = false;
-      render();
-      updateStatus("已撤销");
+      won = false;
+      dead = false;
+      busy = false;
+      updateHud("已撤销");
     }
 
     newBtn.addEventListener("click", newGame);
@@ -888,19 +965,19 @@
       if (activePanel !== "2048") return;
       const tag = document.activeElement && document.activeElement.tagName;
       if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+      if (e.ctrlKey && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
       const map = {
         ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
         w: "up", s: "down", a: "left", d: "right",
         W: "up", S: "down", A: "left", D: "right"
       };
-      if (e.ctrlKey && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
       const dir = map[e.key];
       if (!dir) return;
       e.preventDefault();
       move(dir);
     });
 
-    // Swipe
+    // Swipe on the board
     let swipe = null;
     board.addEventListener("pointerdown", (e) => {
       swipe = { x: e.clientX, y: e.clientY };

@@ -111,19 +111,54 @@ select {
   padding-top: 12px;
 }
 
-.hero__content {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
-  gap: 24px;
-  margin-top: 24px;
-  padding: 36px;
-  border-radius: var(--radius-xl);
-  background:
-    linear-gradient(135deg, rgba(19, 35, 61, 0.96), rgba(8, 18, 32, 0.88)),
-    radial-gradient(circle at 20% 20%, rgba(125, 211, 252, 0.18), transparent 35%);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
+.hero__slim {
+  margin: 28px auto 8px;
+  max-width: 720px;
+  text-align: center;
 }
+.hero__slim h1 {
+  font-size: clamp(34px, 5vw, 54px);
+  margin: 0 0 10px;
+  background: linear-gradient(90deg, #7dd3fc, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.01em;
+}
+.hero__slim p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+
+.topbar__gh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(18, 31, 54, 0.72);
+  border: 1px solid var(--line);
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.topbar__gh:hover { color: var(--text); border-color: rgba(125, 211, 252, 0.45); }
+
+.site-footer {
+  margin-top: 40px;
+  padding: 18px 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.site-footer a { color: var(--primary); }
+.site-footer a:hover { color: #c5f0ff; }
 
 .eyebrow,
 .section-kicker,
@@ -230,7 +265,7 @@ select {
 }
 
 main section {
-  margin-top: 68px;
+  margin-top: 32px;
 }
 
 .section-head {
@@ -309,9 +344,19 @@ main section {
 .game-panel__intro {
   display: flex;
   justify-content: space-between;
-  align-items: end;
-  gap: 20px;
+  align-items: baseline;
+  gap: 14px;
   margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.game-panel__intro h3 {
+  font-size: 22px;
+  margin: 0;
+}
+.game-panel__intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .game-layout {
@@ -378,6 +423,10 @@ main section {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.stats-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .stat-card {
@@ -520,45 +569,87 @@ canvas {
   line-height: 1.6;
 }
 
-/* ---------- 2048 ---------- */
+/* ---------- 2048 ----------
+   Board is a plain square. A static grid of 4×4 cells sits in .t2048-bg
+   as the visual backdrop. Tiles live in .t2048-tiles, each positioned
+   absolutely using --x/--y custom properties. Positions are percentages
+   of the board, so resizing Just Works. Slides animate by transitioning
+   the `top`/`left` values. */
 .board-2048 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  gap: 10px;
-  padding: 10px;
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 2.5%;
   background: rgba(6, 14, 27, 0.9);
   border: 1px solid var(--line);
   border-radius: 20px;
-  aspect-ratio: 1 / 1;
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
   touch-action: none;
   user-select: none;
+  /* geometry vars (in % of board width):
+     pad=2.5, gap=2.5 → cell = (100 - 2*2.5 - 3*2.5) / 4 = 21.875
+     step = cell + gap = 24.375 */
+  --pad: 2.5%;
+  --cell: 21.875%;
+  --step: 24.375%;
 }
 
-.t2048-cell {
+.t2048-bg {
+  position: absolute;
+  inset: var(--pad);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 2.5%;
+}
+
+.t2048-bg .t2048-cell {
   background: rgba(18, 30, 52, 0.7);
-  border-radius: 12px;
-  position: relative;
+  border-radius: 10px;
+}
+
+.t2048-tiles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 .t2048-tile {
   position: absolute;
-  inset: 0;
+  width: var(--cell);
+  height: var(--cell);
+  top: calc(var(--pad) + var(--y, 0) * var(--step));
+  left: calc(var(--pad) + var(--x, 0) * var(--step));
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: clamp(20px, 5vw, 34px);
-  border-radius: 12px;
+  border-radius: 10px;
   color: #061624;
-  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
-  transform: scale(0);
+  transition: top 0.13s ease, left 0.13s ease;
+  will-change: top, left;
 }
-.t2048-tile[data-v="0"] { background: transparent; color: transparent; }
-.t2048-tile:not([data-v="0"]) { transform: scale(1); }
+
+.t2048-tile.is-new {
+  animation: t2048-pop 0.18s ease 0.1s backwards;
+}
+.t2048-tile.is-merged {
+  animation: t2048-merge 0.22s ease;
+  z-index: 2;
+}
+
+@keyframes t2048-pop {
+  from { transform: scale(0); }
+  60%  { transform: scale(1.08); }
+  to   { transform: scale(1); }
+}
+@keyframes t2048-merge {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
 
 .t2048-tile[data-v="2"]    { background: #dbeafe; }
 .t2048-tile[data-v="4"]    { background: #bae6fd; }
@@ -570,11 +661,11 @@ canvas {
 .t2048-tile[data-v="256"]  { background: #ec4899; color: #fff; font-size: clamp(18px, 4.6vw, 30px); }
 .t2048-tile[data-v="512"]  { background: #f43f5e; color: #fff; font-size: clamp(18px, 4.6vw, 30px); }
 .t2048-tile[data-v="1024"] { background: #f59e0b; color: #1f1303; font-size: clamp(16px, 4vw, 26px); }
-.t2048-tile[data-v="2048"] { background: linear-gradient(135deg, #fcd34d, #f97316); color: #1f1303; font-size: clamp(16px, 4vw, 26px); box-shadow: 0 0 24px rgba(252, 211, 77, 0.5); }
-.t2048-tile:not([data-v="0"]):not([data-v="2"]):not([data-v="4"]):not([data-v="8"]):not([data-v="16"]):not([data-v="32"]):not([data-v="64"]):not([data-v="128"]):not([data-v="256"]):not([data-v="512"]):not([data-v="1024"]):not([data-v="2048"]) {
-  background: #1e1b4b;
-  color: #fff;
-  font-size: clamp(14px, 3.6vw, 22px);
+.t2048-tile[data-v="2048"] {
+  background: linear-gradient(135deg, #fcd34d, #f97316);
+  color: #1f1303;
+  font-size: clamp(16px, 4vw, 26px);
+  box-shadow: 0 0 24px rgba(252, 211, 77, 0.5);
 }
 
 /* ---------- Minesweeper ---------- */
