@@ -1,6 +1,6 @@
 # Pocket Arcade
 
-> A zero-install, zero-login browser arcade with five instant-play games: Conway's Game of Life, Neon Snake, Memory Match, 2048, and Minesweeper. Pure HTML + CSS + JavaScript — no build step, no framework.
+> A zero-install, zero-login browser arcade with eight instant-play games: Conway's Game of Life, Neon Snake, Memory Match, 2048, Minesweeper, Tetris, 15-Puzzle, and Whack-a-Mole. Pure HTML + CSS + JavaScript — no build step, no framework.
 
 **Live site →** https://toby-qian.github.io/pocket-arcade/
 
@@ -17,6 +17,9 @@
 | 3 | [Memory Match](#3-memory-match)        | chill · bite-sized    | tap / click |
 | 4 | [2048](#4-2048)                        | puzzle · numbers      | Arrow keys / WASD · swipe · `Ctrl+Z` to undo |
 | 5 | [Minesweeper](#5-minesweeper)          | logic · classic       | left-click reveal · right-click flag · long-press flag on mobile |
+| 6 | Tetris                                 | falling blocks        | Arrow keys / WASD · `Space` hard drop · on-screen D-pad |
+| 7 | 15-Puzzle                              | sliding puzzle        | click / arrow keys · 3×3 / 4×4 / 5×5 sizes |
+| 8 | Whack-a-Mole                           | reflex                | tap moles within 30 s · 3 difficulty tiers |
 
 ### 1. Conway's Game of Life
 Paint cells on a dark toroidal grid, press play, and watch three tiny rules generate surprisingly complex life. Presets include **Glider**, **Gosper's Glider Gun**, **Pulsar**, **LWSS**, and **R-pentomino**. Adjustable speed (1–60 fps) and cell size (4–30 px).
