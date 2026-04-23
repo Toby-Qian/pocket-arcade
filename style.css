@@ -35,6 +35,17 @@ body {
     radial-gradient(circle at top left, rgba(56, 189, 248, 0.20), transparent 28%),
     radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 24%),
     linear-gradient(180deg, #06101c 0%, #091625 44%, #07111f 100%);
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 body::before {
@@ -404,9 +415,8 @@ canvas {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-#lifeCanvas {
-  min-height: 520px;
-}
+/* Canvas height is set inline by JS (DPR-aware). No min-height override,
+   otherwise the backing store and CSS box fall out of sync and cells blur. */
 
 .touchpad {
   display: grid;
@@ -426,6 +436,19 @@ canvas {
   background: rgba(16, 28, 48, 0.92);
   color: var(--text);
   cursor: pointer;
+  font-weight: 600;
+  transition: background 0.12s ease, transform 0.08s ease, border-color 0.12s ease;
+  user-select: none;
+}
+
+.touchpad__btn:active {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: rgba(125, 211, 252, 0.5);
+  transform: scale(0.96);
+}
+
+.btn:active, .tab:active {
+  transform: scale(0.97);
 }
 
 .touchpad__btn--up { grid-area: up; }
@@ -500,9 +523,6 @@ canvas {
     flex-direction: column;
   }
 
-  #lifeCanvas {
-    min-height: 420px;
-  }
 }
 
 @media (max-width: 720px) {
@@ -541,26 +561,58 @@ canvas {
 
 @media (max-width: 560px) {
   .topbar {
-    flex-direction: column;
-    align-items: stretch;
-    border-radius: 20px;
+    /* Keep horizontal on phones — column layout used too much vertical space */
+    padding: 10px 14px;
+    gap: 10px;
+    border-radius: 22px;
   }
 
   .topbar__links {
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 14px;
+    font-size: 13px;
   }
 
   .hero h1 {
-    font-size: 34px;
+    font-size: 32px;
+  }
+
+  .hero__content {
+    padding: 22px;
+    gap: 18px;
   }
 
   .btn,
   .tab,
   .touchpad__btn {
-    min-height: 48px;
+    min-height: 46px;
   }
 
-  #lifeCanvas {
-    min-height: 340px;
+  .game-panel,
+  .guide-card,
+  .about-card,
+  .control-card,
+  .play-card {
+    padding: 16px;
+    border-radius: 20px;
   }
+
+
+  .control-row .btn {
+    flex: 1 1 calc(50% - 10px);
+  }
+
+  .memory-board {
+    gap: 8px;
+  }
+
+  .memory-card {
+    border-radius: 14px;
+  }
+}
+
+@media (hover: none) {
+  /* On touch devices, hover effects are sticky — strip them */
+  .memory-card:hover { border-color: var(--line); }
+  .btn:hover { transform: none; }
 }
