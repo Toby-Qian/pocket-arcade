@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pocket Arcade</title>
-<meta name="description" content="Pocket Arcade 是一个即开即玩的浏览器小游戏站，包含生命游戏、贪吃蛇、记忆翻牌、2048 与扫雷，支持手机与桌面端。">
+<meta name="description" content="Pocket Arcade 是一个即开即玩的浏览器小游戏站，包含生命游戏、贪吃蛇、记忆翻牌、2048、扫雷、俄罗斯方块、华容道与打地鼠，支持手机与桌面端。">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -33,6 +33,9 @@
           <button class="tab" type="button" data-target="memory">记忆翻牌</button>
           <button class="tab" type="button" data-target="2048">2048</button>
           <button class="tab" type="button" data-target="mines">扫雷</button>
+          <button class="tab" type="button" data-target="tetris">俄罗斯方块</button>
+          <button class="tab" type="button" data-target="puzzle">华容道</button>
+          <button class="tab" type="button" data-target="mole">打地鼠</button>
         </div>
 
         <section class="game-panel is-active" id="game-life" data-panel="life">
@@ -264,6 +267,125 @@
 
             <div class="play-card">
               <div class="mines-board" id="minesBoard" aria-label="扫雷棋盘"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="game-panel" id="game-tetris" data-panel="tetris">
+          <div class="game-panel__intro">
+            <h3>俄罗斯方块</h3>
+            <p>方向键 / WASD 移动旋转，空格硬降。</p>
+          </div>
+
+          <div class="game-layout">
+            <div class="control-card">
+              <div class="control-row control-row--wrap">
+                <button id="tetrisStart" class="btn btn--primary" type="button">开始</button>
+                <button id="tetrisPause" class="btn btn--secondary" type="button">暂停</button>
+                <button id="tetrisReset" class="btn btn--secondary" type="button">重置</button>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card"><span>得分</span><strong id="tetrisScore">0</strong></div>
+                <div class="stat-card"><span>最高分</span><strong id="tetrisBest">0</strong></div>
+                <div class="stat-card"><span>消行</span><strong id="tetrisLines">0</strong></div>
+              </div>
+
+              <div class="tetris-next">
+                <span>下一个</span>
+                <canvas id="tetrisNext" width="96" height="96" aria-label="下一块预览"></canvas>
+              </div>
+
+              <div class="tetris-pad" aria-label="俄罗斯方块触控">
+                <button type="button" data-t-dir="left">←</button>
+                <button type="button" data-t-dir="rotate">↻</button>
+                <button type="button" data-t-dir="right">→</button>
+                <button type="button" data-t-dir="soft">软降</button>
+                <button type="button" data-t-dir="hard">硬降</button>
+              </div>
+
+              <p class="hint">↑ 旋转 · ↓ 软降 · 空格 硬降</p>
+            </div>
+
+            <div class="play-card">
+              <canvas id="tetrisCanvas" aria-label="俄罗斯方块画布"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="game-panel" id="game-puzzle" data-panel="puzzle">
+          <div class="game-panel__intro">
+            <h3>数字华容道</h3>
+            <p>滑动方块把 1–15 按顺序还原，空格在右下角。</p>
+          </div>
+
+          <div class="game-layout memory-layout">
+            <div class="control-card">
+              <div class="control-row control-row--wrap">
+                <button id="puzzleShuffle" class="btn btn--primary" type="button">打乱</button>
+                <button id="puzzleSolve" class="btn btn--secondary" type="button">重置</button>
+              </div>
+
+              <div class="control-grid">
+                <label class="field">
+                  <span>尺寸</span>
+                  <select id="puzzleSize">
+                    <option value="3">3 × 3</option>
+                    <option value="4" selected>4 × 4</option>
+                    <option value="5">5 × 5</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card"><span>步数</span><strong id="puzzleMoves">0</strong></div>
+                <div class="stat-card"><span>用时</span><strong id="puzzleTime">0s</strong></div>
+                <div class="stat-card"><span>状态</span><strong id="puzzleStatus">准备好了</strong></div>
+              </div>
+
+              <p class="hint">点击或方向键移动方块</p>
+            </div>
+
+            <div class="play-card">
+              <div class="puzzle-board" id="puzzleBoard" aria-label="华容道棋盘"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="game-panel" id="game-mole" data-panel="mole">
+          <div class="game-panel__intro">
+            <h3>打地鼠</h3>
+            <p>30 秒内尽可能多地敲中冒出的地鼠。</p>
+          </div>
+
+          <div class="game-layout memory-layout">
+            <div class="control-card">
+              <div class="control-row control-row--wrap">
+                <button id="moleStart" class="btn btn--primary" type="button">开始</button>
+              </div>
+
+              <div class="control-grid">
+                <label class="field">
+                  <span>难度</span>
+                  <select id="moleDiff">
+                    <option value="easy">简单</option>
+                    <option value="medium" selected>中等</option>
+                    <option value="hard">困难</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card"><span>得分</span><strong id="moleScore">0</strong></div>
+                <div class="stat-card"><span>最高分</span><strong id="moleBest">0</strong></div>
+                <div class="stat-card"><span>剩余</span><strong id="moleTime">30s</strong></div>
+              </div>
+
+              <p class="hint">点击冒出的地鼠得分 · 打错不扣分</p>
+            </div>
+
+            <div class="play-card">
+              <div class="mole-board" id="moleBoard" aria-label="打地鼠棋盘"></div>
             </div>
           </div>
         </section>

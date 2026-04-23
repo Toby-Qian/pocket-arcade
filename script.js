@@ -33,6 +33,9 @@
   initMemoryGame();
   init2048Game();
   initMinesweeper();
+  initTetrisGame();
+  initPuzzleGame();
+  initMoleGame();
 
   function initTabs() {
     const tabs = $$(".tab");
@@ -1241,5 +1244,584 @@
     });
 
     buildBoard();
+  }
+
+  // ---------- Tetris ----------
+  function initTetrisGame() {
+    const canvas = $("#tetrisCanvas");
+    const nextCanvas = $("#tetrisNext");
+    const startBtn = $("#tetrisStart");
+    const pauseBtn = $("#tetrisPause");
+    const resetBtn = $("#tetrisReset");
+    const scoreEl = $("#tetrisScore");
+    const bestEl = $("#tetrisBest");
+    const linesEl = $("#tetrisLines");
+    const pad = $$(".tetris-pad button");
+
+    const COLS = 10;
+    const ROWS = 20;
+    const storageKey = "mini-arcade-tetris-best";
+
+    // Tetromino definitions: each rotation is a set of cell offsets from origin.
+    const PIECES = {
+      I: { color: "#38bdf8", cells: [[[0,1],[1,1],[2,1],[3,1]], [[2,0],[2,1],[2,2],[2,3]], [[0,2],[1,2],[2,2],[3,2]], [[1,0],[1,1],[1,2],[1,3]]] },
+      O: { color: "#fcd34d", cells: [[[1,0],[2,0],[1,1],[2,1]]] },
+      T: { color: "#a855f7", cells: [[[0,1],[1,1],[2,1],[1,0]], [[1,0],[1,1],[1,2],[2,1]], [[0,1],[1,1],[2,1],[1,2]], [[1,0],[1,1],[1,2],[0,1]]] },
+      S: { color: "#22c55e", cells: [[[1,0],[2,0],[0,1],[1,1]], [[1,0],[1,1],[2,1],[2,2]], [[1,1],[2,1],[0,2],[1,2]], [[0,0],[0,1],[1,1],[1,2]]] },
+      Z: { color: "#fb7185", cells: [[[0,0],[1,0],[1,1],[2,1]], [[2,0],[1,1],[2,1],[1,2]], [[0,1],[1,1],[1,2],[2,2]], [[1,0],[0,1],[1,1],[0,2]]] },
+      J: { color: "#6366f1", cells: [[[0,0],[0,1],[1,1],[2,1]], [[1,0],[2,0],[1,1],[1,2]], [[0,1],[1,1],[2,1],[2,2]], [[1,0],[1,1],[0,2],[1,2]]] },
+      L: { color: "#f97316", cells: [[[2,0],[0,1],[1,1],[2,1]], [[1,0],[1,1],[1,2],[2,2]], [[0,1],[1,1],[2,1],[0,2]], [[0,0],[1,0],[1,1],[1,2]]] }
+    };
+    const TYPES = Object.keys(PIECES);
+
+    let ctx, nextCtx;
+    let cssW = 0, cssH = 0, cell = 24;
+    let board;          // ROWS × COLS of color | null
+    let piece;          // {type, rot, x, y}
+    let nextPiece;
+    let dropMs = 750;
+    let lastDrop = 0;
+    let running = false;
+    let over = false;
+    let score = 0;
+    let lines = 0;
+    let best = Number(localStorage.getItem(storageKey) || 0);
+    let rafId = null;
+    let lastFrame = 0;
+
+    function resizeTetris() {
+      const w = canvas.parentElement.clientWidth;
+      const maxH = Math.min(window.innerHeight - 200, 720);
+      // Keep a 1:2 aspect so the 10x20 grid fills neatly.
+      let width = Math.min(w - 2, 360);
+      let height = width * 2;
+      if (height > maxH) {
+        height = maxH;
+        width = height / 2;
+      }
+      const fit = fitCanvas(canvas, width, height);
+      ctx = fit.ctx;
+      cssW = width; cssH = height;
+      cell = cssW / COLS;
+      const nfit = fitCanvas(nextCanvas, 96, 96);
+      nextCtx = nfit.ctx;
+      draw();
+    }
+
+    function emptyBoard() {
+      return Array.from({ length: ROWS }, () => new Array(COLS).fill(null));
+    }
+
+    function randomPiece() {
+      const t = TYPES[Math.floor(Math.random() * TYPES.length)];
+      return { type: t, rot: 0, x: 3, y: 0 };
+    }
+
+    function cellsOf(p) {
+      return PIECES[p.type].cells[p.rot % PIECES[p.type].cells.length];
+    }
+
+    function collides(p, dx, dy, drot) {
+      const rot = (p.rot + (drot || 0) + 4) % PIECES[p.type].cells.length;
+      const cells = PIECES[p.type].cells[rot];
+      for (const [cx, cy] of cells) {
+        const nx = p.x + cx + (dx || 0);
+        const ny = p.y + cy + (dy || 0);
+        if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+        if (ny >= 0 && board[ny][nx]) return true;
+      }
+      return false;
+    }
+
+    function lockPiece() {
+      for (const [cx, cy] of cellsOf(piece)) {
+        const nx = piece.x + cx;
+        const ny = piece.y + cy;
+        if (ny < 0) { over = true; running = false; return; }
+        board[ny][nx] = PIECES[piece.type].color;
+      }
+      clearLines();
+      piece = nextPiece;
+      nextPiece = randomPiece();
+      if (collides(piece, 0, 0, 0)) {
+        over = true;
+        running = false;
+        if (score > best) { best = score; localStorage.setItem(storageKey, String(best)); }
+      }
+    }
+
+    function clearLines() {
+      let cleared = 0;
+      for (let y = ROWS - 1; y >= 0; y--) {
+        if (board[y].every((c) => c)) {
+          board.splice(y, 1);
+          board.unshift(new Array(COLS).fill(null));
+          cleared++;
+          y++; // recheck this row
+        }
+      }
+      if (cleared) {
+        lines += cleared;
+        const addMap = [0, 100, 300, 500, 800];
+        score += addMap[cleared];
+        // Speed up every 10 lines
+        const level = Math.floor(lines / 10);
+        dropMs = Math.max(80, 750 - level * 60);
+        if (score > best) { best = score; localStorage.setItem(storageKey, String(best)); }
+      }
+      updateHud();
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(score);
+      bestEl.textContent = String(best);
+      linesEl.textContent = String(lines);
+      pauseBtn.textContent = running ? "暂停" : "继续";
+    }
+
+    function drawCell(g, x, y, color, c) {
+      g.fillStyle = color;
+      g.fillRect(x * c + 1, y * c + 1, c - 2, c - 2);
+      g.fillStyle = "rgba(255,255,255,0.18)";
+      g.fillRect(x * c + 1, y * c + 1, c - 2, 3);
+    }
+
+    function draw() {
+      ctx.fillStyle = "#020817";
+      ctx.fillRect(0, 0, cssW, cssH);
+      // subtle grid
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= COLS; i++) { const p = i * cell + 0.5; ctx.moveTo(p, 0); ctx.lineTo(p, cssH); }
+      for (let i = 0; i <= ROWS; i++) { const p = i * cell + 0.5; ctx.moveTo(0, p); ctx.lineTo(cssW, p); }
+      ctx.stroke();
+
+      // board
+      for (let y = 0; y < ROWS; y++)
+        for (let x = 0; x < COLS; x++)
+          if (board[y][x]) drawCell(ctx, x, y, board[y][x], cell);
+
+      // ghost piece
+      if (piece && !over) {
+        let ghostY = piece.y;
+        while (!collides(piece, 0, ghostY - piece.y + 1, 0)) ghostY++;
+        const color = PIECES[piece.type].color;
+        ctx.globalAlpha = 0.22;
+        for (const [cx, cy] of cellsOf(piece)) {
+          const gy = ghostY + cy;
+          if (gy >= 0) drawCell(ctx, piece.x + cx, gy, color, cell);
+        }
+        ctx.globalAlpha = 1;
+
+        // active piece
+        for (const [cx, cy] of cellsOf(piece)) {
+          const py = piece.y + cy;
+          if (py >= 0) drawCell(ctx, piece.x + cx, py, color, cell);
+        }
+      }
+
+      if (over) {
+        ctx.fillStyle = "rgba(2, 8, 23, 0.75)";
+        ctx.fillRect(0, 0, cssW, cssH);
+        ctx.fillStyle = "#fb7185";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.font = "700 28px 'Segoe UI', 'PingFang SC', sans-serif";
+        ctx.fillText("Game Over", cssW / 2, cssH / 2 - 12);
+        ctx.font = "500 14px 'Segoe UI', 'PingFang SC', sans-serif";
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillText("点开始再来一局", cssW / 2, cssH / 2 + 14);
+      }
+
+      drawNext();
+    }
+
+    function drawNext() {
+      if (!nextCtx || !nextPiece) return;
+      nextCtx.fillStyle = "#091625";
+      nextCtx.fillRect(0, 0, 96, 96);
+      const c = 20;
+      const cells = PIECES[nextPiece.type].cells[0];
+      // Center roughly
+      let minX = 4, maxX = 0, minY = 4, maxY = 0;
+      for (const [x, y] of cells) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+      const ox = (96 - (maxX - minX + 1) * c) / 2 - minX * c;
+      const oy = (96 - (maxY - minY + 1) * c) / 2 - minY * c;
+      for (const [x, y] of cells) {
+        nextCtx.fillStyle = PIECES[nextPiece.type].color;
+        nextCtx.fillRect(ox + x * c + 1, oy + y * c + 1, c - 2, c - 2);
+      }
+    }
+
+    function tick(t) {
+      if (!running) { rafId = requestAnimationFrame(tick); return; }
+      if (activePanel !== "tetris") { rafId = requestAnimationFrame(tick); return; }
+      if (!lastFrame) lastFrame = t;
+      if (t - lastDrop >= dropMs) {
+        softDrop();
+        lastDrop = t;
+      }
+      lastFrame = t;
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function softDrop() {
+      if (over) return;
+      if (!collides(piece, 0, 1, 0)) { piece.y++; draw(); }
+      else { lockPiece(); draw(); }
+    }
+
+    function hardDrop() {
+      if (over) return;
+      let drop = 0;
+      while (!collides(piece, 0, drop + 1, 0)) drop++;
+      piece.y += drop;
+      score += drop * 2;
+      lockPiece();
+      updateHud();
+      draw();
+    }
+
+    function move(dx) {
+      if (over || !running) return;
+      if (!collides(piece, dx, 0, 0)) { piece.x += dx; draw(); }
+    }
+    function rotate() {
+      if (over || !running) return;
+      // Basic wall kicks: try 0, -1, +1, -2, +2
+      for (const k of [0, -1, 1, -2, 2]) {
+        if (!collides(piece, k, 0, 1)) { piece.x += k; piece.rot = (piece.rot + 1) % PIECES[piece.type].cells.length; draw(); return; }
+      }
+    }
+
+    function newGame() {
+      board = emptyBoard();
+      piece = randomPiece();
+      nextPiece = randomPiece();
+      score = 0; lines = 0;
+      dropMs = 750;
+      over = false;
+      running = true;
+      lastDrop = performance.now();
+      updateHud();
+      draw();
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (over || !piece) newGame();
+      else { running = true; updateHud(); }
+    });
+    pauseBtn.addEventListener("click", () => {
+      if (over) return;
+      running = !running;
+      updateHud();
+    });
+    resetBtn.addEventListener("click", () => { running = false; newGame(); running = false; updateHud(); });
+
+    window.addEventListener("keydown", (e) => {
+      if (activePanel !== "tetris") return;
+      const key = e.key;
+      const map = { ArrowLeft: "left", ArrowRight: "right", ArrowDown: "soft", ArrowUp: "rotate",
+                    a: "left", d: "right", s: "soft", w: "rotate",
+                    A: "left", D: "right", S: "soft", W: "rotate" };
+      if (key === " " || e.code === "Space") { e.preventDefault(); hardDrop(); return; }
+      const action = map[key];
+      if (!action) return;
+      e.preventDefault();
+      if (action === "left") move(-1);
+      else if (action === "right") move(1);
+      else if (action === "soft") { softDrop(); lastDrop = performance.now(); }
+      else if (action === "rotate") rotate();
+    });
+
+    pad.forEach((btn) => {
+      const fire = (e) => {
+        e.preventDefault();
+        const d = btn.dataset.tDir;
+        if (d === "left") move(-1);
+        else if (d === "right") move(1);
+        else if (d === "rotate") rotate();
+        else if (d === "soft") { softDrop(); lastDrop = performance.now(); }
+        else if (d === "hard") hardDrop();
+      };
+      btn.addEventListener("pointerdown", fire);
+      btn.addEventListener("click", (e) => e.preventDefault());
+    });
+
+    onPanelChange((key) => {
+      if (key !== "tetris" && running) { running = false; updateHud(); }
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && running) { running = false; updateHud(); }
+    });
+
+    let rt;
+    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(resizeTetris, 120); });
+
+    resizeTetris();
+    // initialize a static preview state
+    board = emptyBoard();
+    piece = randomPiece();
+    nextPiece = randomPiece();
+    updateHud();
+    draw();
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // ---------- 15-Puzzle (Sliding tiles) ----------
+  function initPuzzleGame() {
+    const board = $("#puzzleBoard");
+    const shuffleBtn = $("#puzzleShuffle");
+    const solveBtn = $("#puzzleSolve");
+    const sizeSelect = $("#puzzleSize");
+    const movesEl = $("#puzzleMoves");
+    const timeEl = $("#puzzleTime");
+    const statusEl = $("#puzzleStatus");
+
+    let N = 4;
+    let tiles = [];       // length N*N; tiles[i] is value at position i (0 = empty)
+    let moves = 0;
+    let started = 0;
+    let solved = true;
+    let timerId = null;
+
+    function startTimer() {
+      stopTimer();
+      started = performance.now();
+      timerId = setInterval(() => {
+        const s = Math.round((performance.now() - started) / 1000);
+        timeEl.textContent = `${s}s`;
+      }, 250);
+    }
+    function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+
+    function isSolved() {
+      for (let i = 0; i < N * N - 1; i++) if (tiles[i] !== i + 1) return false;
+      return tiles[N * N - 1] === 0;
+    }
+
+    function render() {
+      board.style.setProperty("--n", N);
+      board.innerHTML = "";
+      for (let i = 0; i < N * N; i++) {
+        const v = tiles[i];
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "puzzle-tile" + (v === 0 ? " is-empty" : "") + (v && v === i + 1 ? " is-home" : "");
+        el.textContent = v ? String(v) : "";
+        el.dataset.i = String(i);
+        board.appendChild(el);
+      }
+      movesEl.textContent = String(moves);
+      statusEl.textContent = solved ? "已还原" : (moves === 0 ? "准备好了" : "进行中");
+    }
+
+    function emptyIndex() { return tiles.indexOf(0); }
+
+    // Try to move the tile at index i if it's adjacent to the empty slot.
+    function tryMove(i) {
+      if (solved) return;
+      const e = emptyIndex();
+      const ex = e % N, ey = Math.floor(e / N);
+      const ix = i % N, iy = Math.floor(i / N);
+      if (Math.abs(ex - ix) + Math.abs(ey - iy) !== 1) return;
+
+      if (!started) startTimer();
+      tiles[e] = tiles[i];
+      tiles[i] = 0;
+      moves++;
+      if (isSolved()) {
+        solved = true;
+        stopTimer();
+        const s = Math.round((performance.now() - started) / 1000);
+        render();
+        statusEl.textContent = `🎉 还原 · ${moves} 步 / ${s}s`;
+        return;
+      }
+      render();
+    }
+
+    // Shuffle by performing random valid moves — always solvable.
+    function shuffle() {
+      tiles = Array.from({ length: N * N }, (_, i) => (i + 1) % (N * N));
+      let last = -1;
+      for (let k = 0; k < N * N * 40; k++) {
+        const e = tiles.indexOf(0);
+        const ex = e % N, ey = Math.floor(e / N);
+        const options = [];
+        if (ex > 0) options.push(e - 1);
+        if (ex < N - 1) options.push(e + 1);
+        if (ey > 0) options.push(e - N);
+        if (ey < N - 1) options.push(e + N);
+        const choices = options.filter((o) => o !== last);
+        const pick = choices[Math.floor(Math.random() * choices.length)];
+        tiles[e] = tiles[pick];
+        tiles[pick] = 0;
+        last = e;
+      }
+      moves = 0;
+      started = 0;
+      solved = false;
+      stopTimer();
+      timeEl.textContent = "0s";
+      render();
+      statusEl.textContent = "开始吧";
+    }
+
+    function reset() {
+      tiles = Array.from({ length: N * N }, (_, i) => (i + 1) % (N * N));
+      moves = 0;
+      started = 0;
+      solved = true;
+      stopTimer();
+      timeEl.textContent = "0s";
+      render();
+    }
+
+    board.addEventListener("click", (e) => {
+      const t = e.target.closest(".puzzle-tile");
+      if (!t) return;
+      tryMove(Number(t.dataset.i));
+    });
+
+    // Arrow keys slide the tile from the opposite side into the empty slot.
+    window.addEventListener("keydown", (e) => {
+      if (activePanel !== "puzzle") return;
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === "INPUT" || tag === "SELECT") return;
+      const map = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+      const d = map[e.key]; if (!d) return;
+      e.preventDefault();
+      const emp = emptyIndex();
+      const ex = emp % N, ey = Math.floor(emp / N);
+      let src = -1;
+      if (d === "up" && ey < N - 1) src = emp + N;
+      if (d === "down" && ey > 0) src = emp - N;
+      if (d === "left" && ex < N - 1) src = emp + 1;
+      if (d === "right" && ex > 0) src = emp - 1;
+      if (src >= 0) tryMove(src);
+    });
+
+    shuffleBtn.addEventListener("click", shuffle);
+    solveBtn.addEventListener("click", reset);
+    sizeSelect.addEventListener("change", () => { N = Number(sizeSelect.value); reset(); });
+
+    onPanelChange((key) => { if (key !== "puzzle") stopTimer(); });
+
+    reset();
+  }
+
+  // ---------- Whack-a-Mole ----------
+  function initMoleGame() {
+    const board = $("#moleBoard");
+    const startBtn = $("#moleStart");
+    const diffSelect = $("#moleDiff");
+    const scoreEl = $("#moleScore");
+    const bestEl = $("#moleBest");
+    const timeEl = $("#moleTime");
+    const storageKey = "mini-arcade-mole-best";
+
+    const DIFFS = {
+      easy:   { up: 950, gap: 350, duration: 30 },
+      medium: { up: 700, gap: 250, duration: 30 },
+      hard:   { up: 500, gap: 180, duration: 30 }
+    };
+
+    const HOLES = 9;
+    let holes = [];       // button elements
+    let score = 0;
+    let best = Number(localStorage.getItem(storageKey) || 0);
+    let running = false;
+    let endAt = 0;
+    let timerId = null;
+    let moleIdx = -1;
+    let moleTimer = null;
+
+    board.innerHTML = "";
+    for (let i = 0; i < HOLES; i++) {
+      const hole = document.createElement("button");
+      hole.type = "button";
+      hole.className = "mole-hole";
+      hole.setAttribute("aria-label", "地鼠洞 " + (i + 1));
+      hole.innerHTML = '<span class="mole-head">🐹</span>';
+      board.appendChild(hole);
+      holes.push(hole);
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(score);
+      bestEl.textContent = String(best);
+    }
+
+    function popMole() {
+      if (!running) return;
+      const cfg = DIFFS[diffSelect.value] || DIFFS.medium;
+      // Avoid re-using the same hole back-to-back
+      let idx;
+      do { idx = Math.floor(Math.random() * HOLES); } while (idx === moleIdx && HOLES > 1);
+      moleIdx = idx;
+      holes[idx].classList.add("is-up");
+      moleTimer = setTimeout(() => {
+        holes[idx].classList.remove("is-up");
+        moleTimer = setTimeout(popMole, cfg.gap);
+      }, cfg.up);
+    }
+
+    function hit(i) {
+      if (!running) return;
+      if (holes[i].classList.contains("is-up") && !holes[i].classList.contains("is-hit")) {
+        holes[i].classList.add("is-hit");
+        setTimeout(() => holes[i].classList.remove("is-hit"), 220);
+        score++;
+        updateHud();
+      }
+    }
+
+    function tickTimer() {
+      const remain = Math.max(0, Math.ceil((endAt - performance.now()) / 1000));
+      timeEl.textContent = remain + "s";
+      if (remain <= 0) end();
+    }
+
+    function start() {
+      const cfg = DIFFS[diffSelect.value] || DIFFS.medium;
+      clearTimers();
+      holes.forEach((h) => h.classList.remove("is-up", "is-hit"));
+      score = 0;
+      moleIdx = -1;
+      running = true;
+      endAt = performance.now() + cfg.duration * 1000;
+      updateHud();
+      timeEl.textContent = cfg.duration + "s";
+      timerId = setInterval(tickTimer, 200);
+      popMole();
+    }
+
+    function end() {
+      running = false;
+      clearTimers();
+      holes.forEach((h) => h.classList.remove("is-up"));
+      if (score > best) { best = score; localStorage.setItem(storageKey, String(best)); }
+      updateHud();
+      timeEl.textContent = "结束";
+    }
+
+    function clearTimers() {
+      if (timerId) { clearInterval(timerId); timerId = null; }
+      if (moleTimer) { clearTimeout(moleTimer); moleTimer = null; }
+    }
+
+    holes.forEach((h, i) => {
+      h.addEventListener("pointerdown", (e) => { e.preventDefault(); hit(i); });
+      h.addEventListener("click", (e) => e.preventDefault());
+    });
+
+    startBtn.addEventListener("click", start);
+
+    onPanelChange((key) => { if (key !== "mole" && running) end(); });
+    document.addEventListener("visibilitychange", () => { if (document.hidden && running) end(); });
+
+    updateHud();
+    timeEl.textContent = "30s";
   }
 })();

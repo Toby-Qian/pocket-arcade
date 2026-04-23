@@ -722,6 +722,156 @@ canvas {
 .mine-cell[data-n="7"] { color: #c4b5fd; }
 .mine-cell[data-n="8"] { color: #fda4af; }
 
+/* ---------- Tetris ---------- */
+.tetris-next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(16, 28, 48, 0.55);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+.tetris-next span {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+.tetris-next canvas {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  background: #091625;
+  border: 1px solid var(--line);
+}
+
+.tetris-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.tetris-pad button {
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(16, 28, 48, 0.92);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+  user-select: none;
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+.tetris-pad button:active {
+  background: rgba(56, 189, 248, 0.22);
+  transform: scale(0.96);
+}
+.tetris-pad button[data-t-dir="soft"],
+.tetris-pad button[data-t-dir="hard"] {
+  grid-column: span 3;
+}
+.tetris-pad button[data-t-dir="hard"] {
+  background: rgba(252, 211, 77, 0.18);
+  border-color: rgba(252, 211, 77, 0.45);
+}
+
+/* ---------- 15-Puzzle ---------- */
+.puzzle-board {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 4), 1fr);
+  gap: 6px;
+  padding: 10px;
+  background: rgba(6, 14, 27, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  user-select: none;
+}
+
+.puzzle-tile {
+  aspect-ratio: 1 / 1;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1e3a8a, #0f172a);
+  color: #e0f2fe;
+  font-weight: 700;
+  font-size: clamp(20px, 5vw, 32px);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+}
+.puzzle-tile:hover { border-color: rgba(125, 211, 252, 0.5); }
+.puzzle-tile:active { transform: scale(0.96); }
+.puzzle-tile.is-home {
+  background: linear-gradient(135deg, #1e40af, #134e4a);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+.puzzle-tile.is-empty {
+  background: transparent;
+  border: 1px dashed rgba(148, 163, 184, 0.2);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ---------- Whack-a-Mole ---------- */
+.mole-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 14px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(34, 197, 94, 0.15), transparent 70%),
+    rgba(6, 14, 27, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  user-select: none;
+}
+
+.mole-hole {
+  position: relative;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: radial-gradient(ellipse at 50% 40%, #0b1220 0%, #050a14 70%);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow:
+    inset 0 -6px 16px rgba(0, 0, 0, 0.7),
+    inset 0 4px 10px rgba(125, 211, 252, 0.08);
+}
+.mole-hole::after {
+  /* fake ground highlight */
+  content: "";
+  position: absolute;
+  left: 10%; right: 10%;
+  bottom: -2px; height: 12px;
+  background: rgba(34, 197, 94, 0.22);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  filter: blur(2px);
+}
+.mole-head {
+  position: absolute;
+  left: 0; right: 0; bottom: -60%;
+  margin: 0 auto;
+  width: 72%;
+  aspect-ratio: 1 / 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(28px, 8vw, 56px);
+  transition: bottom 0.14s cubic-bezier(.3, 1.4, .5, 1);
+  pointer-events: none;
+}
+.mole-hole.is-up .mole-head { bottom: 12%; }
+.mole-hole.is-hit .mole-head { transform: scale(0.8); filter: hue-rotate(30deg) saturate(1.5); }
+.mole-hole:active { box-shadow: inset 0 -4px 12px rgba(0,0,0,0.7); }
+
 @media (max-width: 960px) {
   .hero__content,
   .game-layout,
