@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pocket Arcade</title>
-<meta name="description" content="Pocket Arcade 是一个即开即玩的浏览器小游戏站，包含生命游戏、贪吃蛇和记忆翻牌，支持手机与桌面端。">
+<meta name="description" content="Pocket Arcade 是一个即开即玩的浏览器小游戏站，包含生命游戏、贪吃蛇、记忆翻牌、2048 与扫雷，支持手机与桌面端。">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -79,6 +79,20 @@
             <p>适合碎片时间放松。连续翻牌配对，越少步数完成越漂亮，触屏体验也很自然。</p>
             <a class="guide-card__link" href="#game-memory" data-jump="memory">去玩翻牌</a>
           </article>
+
+          <article class="guide-card">
+            <p class="guide-card__tag">数字谜题</p>
+            <h3>2048</h3>
+            <p>方向键或滑动合并相同数字，向 2048 甚至更高进发。支持撤销一步。</p>
+            <a class="guide-card__link" href="#game-2048" data-jump="2048">去玩 2048</a>
+          </article>
+
+          <article class="guide-card">
+            <p class="guide-card__tag">硬核推理</p>
+            <h3>扫雷</h3>
+            <p>经典的数字推理小游戏，左键翻开、右键标记，手机端长按即可标记。</p>
+            <a class="guide-card__link" href="#game-mines" data-jump="mines">去玩扫雷</a>
+          </article>
         </div>
       </section>
 
@@ -93,6 +107,8 @@
           <button class="tab is-active" type="button" data-target="life">生命游戏</button>
           <button class="tab" type="button" data-target="snake">贪吃蛇</button>
           <button class="tab" type="button" data-target="memory">记忆翻牌</button>
+          <button class="tab" type="button" data-target="2048">2048</button>
+          <button class="tab" type="button" data-target="mines">扫雷</button>
         </div>
 
         <section class="game-panel is-active" id="game-life" data-panel="life">
@@ -248,6 +264,96 @@
 
             <div class="play-card">
               <div class="memory-board" id="memoryBoard" aria-label="记忆翻牌"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="game-panel" id="game-2048" data-panel="2048">
+          <div class="game-panel__intro">
+            <div>
+              <p class="game-panel__eyebrow">2048</p>
+              <h3>2048 数字合并</h3>
+            </div>
+            <p>方向键或在棋盘上滑动；相同数字相撞合并，目标是合成 2048。</p>
+          </div>
+
+          <div class="game-layout memory-layout">
+            <div class="control-card">
+              <div class="control-row control-row--wrap">
+                <button id="g2048New" class="btn btn--primary" type="button">新游戏</button>
+                <button id="g2048Undo" class="btn btn--secondary" type="button">撤销</button>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <span>得分</span>
+                  <strong id="g2048Score">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span>最高分</span>
+                  <strong id="g2048Best">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span>状态</span>
+                  <strong id="g2048Status">进行中</strong>
+                </div>
+              </div>
+
+              <p class="hint">电脑：方向键 · WASD · Ctrl+Z 撤销<br>手机：在棋盘上滑动</p>
+            </div>
+
+            <div class="play-card">
+              <div class="board-2048" id="g2048Board" aria-label="2048 棋盘"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="game-panel" id="game-mines" data-panel="mines">
+          <div class="game-panel__intro">
+            <div>
+              <p class="game-panel__eyebrow">Minesweeper</p>
+              <h3>扫雷</h3>
+            </div>
+            <p>根据数字推断哪里有雷。右键/长按标记旗子，翻开所有安全格即获胜。</p>
+          </div>
+
+          <div class="game-layout memory-layout">
+            <div class="control-card">
+              <div class="control-row control-row--wrap">
+                <button id="minesNew" class="btn btn--primary" type="button">新游戏</button>
+              </div>
+
+              <div class="control-grid">
+                <label class="field">
+                  <span>难度</span>
+                  <select id="minesDiff">
+                    <option value="easy">简单 · 9×9 / 10 雷</option>
+                    <option value="medium" selected>中等 · 12×12 / 20 雷</option>
+                    <option value="hard">困难 · 16×16 / 40 雷</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <span>旗子 / 雷</span>
+                  <strong id="minesFlags">0 / 20</strong>
+                </div>
+                <div class="stat-card">
+                  <span>用时</span>
+                  <strong id="minesTime">0s</strong>
+                </div>
+                <div class="stat-card">
+                  <span>状态</span>
+                  <strong id="minesStatus">等待点击</strong>
+                </div>
+              </div>
+
+              <p class="hint">电脑：左键翻开 · 右键标旗<br>手机：点按翻开 · 长按标旗</p>
+            </div>
+
+            <div class="play-card">
+              <div class="mines-board" id="minesBoard" aria-label="扫雷棋盘"></div>
             </div>
           </div>
         </section>
